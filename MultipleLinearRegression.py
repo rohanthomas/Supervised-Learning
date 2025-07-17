@@ -1,65 +1,83 @@
 import numpy as np
 
-class LogisticRegression():
+class MultipleLinearRegression():
     """
-    A class performing Binary Logistic Regression. The decision boundaries are assumed to be linear.
+    A class performing multiple linear regression.
 
     Example:
         >>> import numpy as np
-        >>> X_train = np.array([[1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]])
-        >>> y_train = np.array([0, 0, 0, 1, 1, 1])
+        >>> X_train = np.array([[1, 2], [3, 4], [5, 6]])
+        >>> y_train = np.array([7, 8, 9])
         >>> epochs, alpha = 1000, 0.01
-        >>> model = LogisticRegression(X_train, y_train, epochs, alpha)
-        >>> x_predict = np.array([[2, 3], [4, 5], [6, 7]])
-        >>> predictions = model.predict(x_predict, w, b)
-        >>> print(predictions)
+        >>> model = MultipleLinearRegression(X_train, y_train, epochs, alpha)
+        >>> w_0, b_0 = np.zeros(X_train.shape[1]), 0
+        >>> w, b = model.train(w_0, b_0)
+        >>> x_predict = np.array([7, 8])
+        >>> prediction = model.predict(x_predict, w, b)
+        >>> print(prediction)
+        
     """
-
     def __init__(self, X_train, y_train, epochs, alpha):
         self.X_train = X_train
         self.y_train = y_train
         self.epochs = epochs
         self.alpha = alpha
-    
-    def _sigmoid(self, z):
-        g = 1 / (1 + np.exp(-z))
-        return g
-    
+
     def _gradient(self, w, b):
+        """
+        Computes gradient of the cost function.
+
+        Args:
+            w (numpy.ndarray): Weights
+            b (float): Bias.
+
+        Returns:
+            tuple: 
+            - djdw (numpy.ndarray): A vector containing the partial derivatives of the cost function with respect to each weight, shape (n_features,).
+            - djdb (float): The partial derivative of the cost function with respect to bias.
+        """
         m = self.X_train.shape[0]
 
-        z = np.dot(self.X_train, w) + b
-        f = self._sigmoid(z)
-
-        error = (f - self.y_train)
-        dj_dw = 1/m * np.dot(self.X_train.T, error)
-        dj_db = 1/m * np.sum(error)
-
-        return dj_dw, dj_db  
+        error = (np.dot(w, self.X_train.T) + b - self.y_train)  # Each iteration of the sum is collected into a vector
+        djdw = 1/m * np.dot(self.X_train.T, error)  # Does the usual matrix-vector product
+        djdb = 1/m * np.sum(error)
+        
+        return djdw, djdb
     
     def _cost_function(self, w, b):
-        m, n = self.X_train.shape
+        """
+        Computes mean square cost function.
 
-        z = np.dot(self.X_train, w) + b
-        f = self._sigmoid(z)
-    
-        loss = self.y_train * np.log(f) + (1 - self.y_train) * np.log(1 - f)
-        cost = np.sum(loss)
-        
-        total_cost = -1/m * cost
+        Args:
+            w (numpy.ndarray): Weights
+            b (float): Bias.
 
-        return total_cost
+        Returns:
+            cost (float): Cost.
+        """
+        m = self.X_train.shape[0]
+        cost = 1/(2*m) * np.sum(np.square((np.dot(w, self.X_train.T) + b - self.y_train)))
+        return cost
     
-    def train(self, w_0 = None, b_0 = 0):
-        if w_0 is None:
-            w_0 = np.zeros(self.X_train.shape[1])
-            
+    def train(self, w_0 = 0, b_0 = 0):
+        """
+        Trains the model using gradient descent.
+
+        Args:
+            w_0 (numpy.ndarray or float): Initial weights.
+            b_0 (float): Initial bias.
+
+        Returns:
+            tuple:
+            - w (numpy.ndarray): Fitted weights.
+            - b (float): Fitted bias.
+        """
         w, b = w_0, b_0
 
         for i in range(self.epochs):
-            dj_dw, dj_db = self._gradient(w, b)
-            w = w - self.alpha * dj_dw
-            b = b - self.alpha * dj_db
+            djdw, djdb = self._gradient(w, b)
+            w = w - self.alpha * djdw
+            b = b - self.alpha * djdb
 
             cost = self._cost_function(w, b)
             if i % 10 == 0:
@@ -67,14 +85,16 @@ class LogisticRegression():
         return w, b
     
     def predict(self, x_predict, fitted_w, fitted_b):
-        m = x_predict.shape[0]
-        p = np.zeros(m)
-        z = np.dot(x_predict, fitted_w) + fitted_b
-        f = self._sigmoid(z)
+        """
+        Predicts the expected value.
 
-        for i in range(m):
-            if f[i] > 0.5:
-                p[i] = 1
-            else:
-                p[i] = 0
-        return p
+        Args:
+            x_predict (numpy.ndarray): Input values to predict 
+            fitted_w (numpy.ndarray): Fitted weights from train() method.
+            fitted_b (float): Fitted bais from train() method
+
+        Returns:
+            predicted (float): Predicted output for the given input values.
+        """
+        predicted = np.dot(fitted_w, x_predict) + fitted_b
+        return predicted
