@@ -1,3 +1,3 @@
 # Supervised-Learning-
 
-no libraries absolutely straight from the math!.
+No libraries absolutely straight from the math!.
