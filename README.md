@@ -1,3 +1,3 @@
 # Supervised-Learning-
 
-No libraries absolutely straight from the math!.
+Algorithms are written absolutely straight from the math, no libraries!.
